@@ -1,0 +1,16 @@
+/* client/src/index.css */
+/* Tailwind v4 — single import, no config file needed */
+@import "tailwindcss";
+
+/* 
+  Add your theme tokens here using v4 CSS-first config.
+  Example:
+
+  @theme {
+    --color-primary: #your-color;
+    --font-display: "Your Font", sans-serif;
+  }
+
+  Tailwind v4 generates utilities from these automatically.
+  No tailwind.config.js required.
+*/
