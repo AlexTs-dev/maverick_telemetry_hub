@@ -1,0 +1,31 @@
+# deploy/trip_manager.service
+# Install: sudo cp deploy/trip_manager.service /etc/systemd/system/
+#          sudo systemctl daemon-reload
+#          sudo systemctl enable trip_manager
+#          sudo systemctl start trip_manager
+
+[Unit]
+Description=Maverick Telemetry — Trip Manager
+Documentation=https://github.com/yourusername/maverick-telemetry
+# Must start after db_writer is up so trip_open events are captured
+After=network.target mosquitto.service db_writer.service
+Requires=mosquitto.service db_writer.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/maverick-telemetry
+ExecStart=/home/pi/maverick-telemetry/venv/bin/python trip_manager.py
+
+Restart=always
+RestartSec=5
+TimeoutStopSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trip_manager
+
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

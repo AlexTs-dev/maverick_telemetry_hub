@@ -1,0 +1,35 @@
+# deploy/obd_poller.service
+# Install: sudo cp deploy/obd_poller.service /etc/systemd/system/
+#          sudo systemctl daemon-reload
+#          sudo systemctl enable obd_poller
+#          sudo systemctl start obd_poller
+
+[Unit]
+Description=Maverick Telemetry — OBD Poller
+Documentation=https://github.com/yourusername/maverick-telemetry
+# Last in boot order — starts publishing only after db_writer
+# and trip_manager are ready to consume
+After=network.target mosquitto.service db_writer.service trip_manager.service
+Requires=mosquitto.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/maverick-telemetry
+ExecStart=/home/pi/maverick-telemetry/venv/bin/python obd_poller.py
+
+Restart=always
+RestartSec=5
+TimeoutStopSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=obd_poller
+
+Environment=PYTHONUNBUFFERED=1
+
+# udev rule required for non-root USB access — see deploy/README.md
+# Add pi user to dialout group: sudo usermod -a -G dialout pi
+
+[Install]
+WantedBy=multi-user.target
