@@ -11,6 +11,7 @@ Run once before starting any services:
 Run again after schema changes — existing data is preserved.
 """
 
+import os
 import sqlite3
 import logging
 import sys
@@ -20,7 +21,8 @@ from pathlib import Path
 # Configuration
 # ---------------------------------------------------------------------------
 
-DB_PATH = Path("/home/pi/maverick_telemetry.db")
+_default_db = Path(__file__).resolve().parent.parent / "maverick_telemetry.db"
+DB_PATH = Path(os.environ.get("MAVERICK_DB_PATH", _default_db))
 
 # ---------------------------------------------------------------------------
 # Logging
