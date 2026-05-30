@@ -1,0 +1,49 @@
+# deploy/kiosk.service
+# Launches Chromium in fullscreen kiosk mode after the Express bridge
+# is ready, displaying the Maverick Telemetry Hub dashboard.
+#
+# Install: sudo cp deploy/kiosk.service /etc/systemd/system/
+#          sudo systemctl daemon-reload
+#          sudo systemctl enable kiosk
+#          sudo systemctl start kiosk
+
+[Unit]
+Description=Maverick Telemetry — Kiosk Browser
+Documentation=https://github.com/AlexTs-dev/maverick-telemetry-hub
+# Start after Express bridge is up
+After=express_bridge.service graphical.target
+Requires=express_bridge.service
+
+[Service]
+Type=simple
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+
+# Wait for Express bridge to be ready before launching browser.
+# Retries curl every second for up to 30 seconds.
+ExecStartPre=/bin/bash -c '\
+  for i in $(seq 1 30); do \
+    curl -sf http://localhost:3000/api/health && exit 0; \
+    sleep 1; \
+  done; \
+  exit 1'
+
+ExecStart=chromium-browser \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --no-first-run \
+  --ozone-platform=wayland \
+  --app=http://localhost:3000
+
+# If Chromium crashes, restart it after 3 seconds
+Restart=on-failure
+RestartSec=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kiosk
+
+[Install]
+WantedBy=graphical.target
