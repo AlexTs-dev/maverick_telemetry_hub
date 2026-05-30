@@ -17,8 +17,9 @@ Requires=express_bridge.service
 [Service]
 Type=simple
 User=pi
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=/home/pi/.Xauthority
+# Wayland — pi user's runtime dir holds the compositor socket (wayland-1)
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-1
 
 # Wait for Express bridge to be ready before launching browser.
 # Retries curl every second for up to 30 seconds.
@@ -34,8 +35,13 @@ ExecStart=chromium-browser \
   --noerrdialogs \
   --disable-infobars \
   --no-first-run \
+  --disable-restore-session-state \
+  --disable-session-crashed-bubble \
+  --disable-pinch \
+  --overscroll-history-navigation=0 \
+  --check-for-update-interval=31536000 \
   --ozone-platform=wayland \
-  --app=http://localhost:3000
+  http://localhost:3000
 
 # If Chromium crashes, restart it after 3 seconds
 Restart=on-failure

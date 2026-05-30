@@ -14,6 +14,11 @@ Requires=mosquitto.service
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/maverick-telemetry-hub/server
+
+# Ensure the React build exists before starting.
+# Run `npm run build` in client/ after every frontend change.
+ExecStartPre=/bin/test -f /home/pi/maverick-telemetry-hub/client/dist/index.html
+
 ExecStart=/usr/bin/node index.js
 
 Restart=always
@@ -24,8 +29,8 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=express_bridge
 
-Environment=PYTHONUNBUFFERED=1
 Environment=NODE_ENV=production
+Environment=MAVERICK_DB_PATH=/home/pi/maverick_telemetry.db
 # Create /home/pi/maverick-telemetry-hub/server/.env with:
 # ANTHROPIC_API_KEY=your_key_here
 # PORT=3000
