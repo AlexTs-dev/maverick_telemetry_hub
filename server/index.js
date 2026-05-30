@@ -56,7 +56,7 @@ app.use(express.static(CLIENT_BUILD));
 
 // Catch-all — return index.html for any non-API route so React
 // Router can handle client-side navigation
-app.get('*', (req, res) => {
+app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(CLIENT_BUILD, 'index.html'));
 });
 
