@@ -31,6 +31,7 @@ SyslogIdentifier=db_writer
 
 # Environment
 Environment=PYTHONUNBUFFERED=1
+Environment=MAVERICK_DB_PATH=/home/pi/maverick_telemetry.db
 
 [Install]
 WantedBy=multi-user.target

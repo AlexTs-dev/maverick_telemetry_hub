@@ -168,7 +168,10 @@ def build_mqtt_client(manager_ref: list) -> mqtt.Client:
     manager_ref is a one-element list so the callbacks can reference
     the TripManager after it's constructed (avoids circular init).
     """
-    client = mqtt.Client(client_id="trip_manager")
+    try:
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id="trip_manager")
+    except AttributeError:
+        client = mqtt.Client(client_id="trip_manager")  # paho-mqtt < 2.0
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:

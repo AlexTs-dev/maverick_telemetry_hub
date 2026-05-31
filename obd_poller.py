@@ -14,6 +14,7 @@ Managed by systemd — see deploy/obd_poller.service
 import obd
 import paho.mqtt.client as mqtt
 import json
+import os
 import time
 import logging
 import sys
@@ -27,10 +28,10 @@ MQTT_HOST       = "localhost"
 MQTT_PORT       = 1883
 MQTT_TOPIC_BASE = "maverick/telemetry"
 
-# USB device path for OBDLink EX on Raspberry Pi.
-# Run `ls /dev/ttyUSB*` to confirm — usually ttyUSB0.
-OBD_PORT        = "/dev/ttyUSB0"
-OBD_BAUDRATE    = 38400
+# USB device path for OBDLink EX. Set OBD_PORT env var to override.
+# Leave unset (or set to empty string) to let python-obd auto-detect.
+OBD_PORT        = os.environ.get("OBD_PORT") or None   # None → auto-scan
+OBD_BAUDRATE    = int(os.environ.get("OBD_BAUDRATE", "38400"))
 POLL_INTERVAL   = 1.0  # seconds
 
 # Reconnect backoff — doubles each attempt up to MAX_BACKOFF
@@ -119,7 +120,10 @@ ALL_PIDS = STANDARD_PIDS + HYBRID_PIDS
 # ---------------------------------------------------------------------------
 
 def build_mqtt_client() -> mqtt.Client:
-    client = mqtt.Client(client_id="obd_poller")
+    try:
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id="obd_poller")
+    except AttributeError:
+        client = mqtt.Client(client_id="obd_poller")  # paho-mqtt < 2.0
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
@@ -159,7 +163,7 @@ def connect_obd(backoff: float) -> obd.OBD:
     Attempt to connect to the OBDLink EX. On failure, waits `backoff`
     seconds and raises so the caller can double the backoff and retry.
     """
-    log.info(f"Connecting to OBD on {OBD_PORT}...")
+    log.info(f"Connecting to OBD on {OBD_PORT or 'auto-detected port'}...")
     connection = obd.OBD(
         portstr=OBD_PORT,
         baudrate=OBD_BAUDRATE,

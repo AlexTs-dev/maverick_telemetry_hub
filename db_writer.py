@@ -309,7 +309,10 @@ def handle_dtc(conn: sqlite3.Connection, payload: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def build_mqtt_client(conn: sqlite3.Connection) -> mqtt.Client:
-    client = mqtt.Client(client_id="db_writer")
+    try:
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id="db_writer")
+    except AttributeError:
+        client = mqtt.Client(client_id="db_writer")  # paho-mqtt < 2.0
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:

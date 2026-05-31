@@ -27,6 +27,9 @@ StandardError=journal
 SyslogIdentifier=obd_poller
 
 Environment=PYTHONUNBUFFERED=1
+# Override to pin a specific port; remove or leave empty for auto-detection.
+# Run `ls /dev/ttyUSB* /dev/ttyACM*` after plugging in the OBDLink EX to confirm.
+Environment=OBD_PORT=/dev/ttyUSB0
 
 # udev rule required for non-root USB access — see deploy/README.md
 # Add pi user to dialout group: sudo usermod -a -G dialout pi
