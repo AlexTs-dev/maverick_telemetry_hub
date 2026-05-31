@@ -29,9 +29,7 @@ SyslogIdentifier=obd_poller
 Environment=PYTHONUNBUFFERED=1
 # lsusb confirms OBDLink EX as 0403:6015 (FTDI) on ttyUSB0.
 Environment=OBD_PORT=/dev/ttyUSB0
-# Baud rate — 0 lets python-obd auto-detect (tries 38400, 115200, 57600, etc.)
-# Set to 115200 explicitly once confirmed working to speed up reconnects.
-Environment=OBD_BAUDRATE=0
+Environment=OBD_BAUDRATE=115200
 
 # udev rule required for non-root USB access — see deploy/README.md
 # Add pi user to dialout group: sudo usermod -a -G dialout pi
