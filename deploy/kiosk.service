@@ -17,9 +17,6 @@ Requires=express_bridge.service
 [Service]
 Type=simple
 User=pi
-# Wayland — pi user's runtime dir holds the compositor socket (wayland-1)
-Environment=XDG_RUNTIME_DIR=/run/user/1000
-Environment=WAYLAND_DISPLAY=wayland-1
 
 # Wait for Express bridge to be ready before launching browser.
 # Retries curl every second for up to 30 seconds.
@@ -30,18 +27,9 @@ ExecStartPre=/bin/bash -c '\
   done; \
   exit 1'
 
-ExecStart=chromium-browser \
-  --kiosk \
-  --noerrdialogs \
-  --disable-infobars \
-  --no-first-run \
-  --disable-restore-session-state \
-  --disable-session-crashed-bubble \
-  --disable-pinch \
-  --overscroll-history-navigation=0 \
-  --check-for-update-interval=31536000 \
-  --ozone-platform=wayland \
-  http://localhost:3000
+# kiosk-start.sh auto-detects the Wayland socket (wayland-0 or wayland-1)
+# and opens the live telemetry page in fullscreen.
+ExecStart=/home/pi/maverick-telemetry-hub/deploy/kiosk-start.sh
 
 # If Chromium crashes, restart it after 3 seconds
 Restart=on-failure
