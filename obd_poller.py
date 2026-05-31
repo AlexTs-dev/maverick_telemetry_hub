@@ -31,7 +31,7 @@ MQTT_TOPIC_BASE = "maverick/telemetry"
 # USB device path for OBDLink EX. Set OBD_PORT env var to override.
 # Leave unset (or set to empty string) to let python-obd auto-detect.
 OBD_PORT        = os.environ.get("OBD_PORT") or None   # None → auto-scan
-OBD_BAUDRATE    = int(os.environ.get("OBD_BAUDRATE", "38400"))
+OBD_BAUDRATE    = int(os.environ.get("OBD_BAUDRATE", "0"))  # 0 → auto-detect rate
 POLL_INTERVAL   = 1.0  # seconds
 
 # Reconnect backoff — doubles each attempt up to MAX_BACKOFF
@@ -166,9 +166,10 @@ def connect_obd(backoff: float) -> obd.OBD:
     log.info(f"Connecting to OBD on {OBD_PORT or 'auto-detected port'}...")
     connection = obd.OBD(
         portstr=OBD_PORT,
-        baudrate=OBD_BAUDRATE,
+        baudrate=OBD_BAUDRATE or None,  # None triggers auto-detection
         fast=False,       # required for Ford vehicles
         timeout=30,
+        check_voltage=False,
     )
     if not connection.is_connected():
         raise ConnectionError(f"OBD connection failed — is OBDLink EX plugged in?")
