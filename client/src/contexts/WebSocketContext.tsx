@@ -7,7 +7,7 @@
 // Usage:
 //   const { connected, lastReading, readings, pollerStatus } = useLiveTelemetry()
 
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -27,9 +27,10 @@ import type { Reading } from './TripContext'
 const BUFFER_SIZE = 300
 
 const WS_URL =
-  typeof window !== 'undefined'
+  import.meta.env.VITE_WS_URL ??
+  (typeof window !== 'undefined'
     ? `ws://${window.location.host}`
-    : 'ws://localhost:3000'
+    : 'ws://localhost:3000')
 
 // Reconnect backoff — doubles each attempt up to MAX_BACKOFF
 const INITIAL_BACKOFF = 1000  // ms
@@ -179,10 +180,16 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     ws.onopen = () => {
       setConnected(true)
       backoffRef.current = INITIAL_BACKOFF
+      // Mock server doesn't emit poller_status events — treat the
+      // WebSocket connection itself as proof the poller is up in dev.
+      if (import.meta.env.VITE_WS_URL) {
+        setPollerStatus('connected')
+      }
     }
 
     ws.onclose = () => {
       setConnected(false)
+      if (import.meta.env.VITE_WS_URL) setPollerStatus('disconnected')
       wsRef.current = null
       // Schedule reconnect with backoff
       timerRef.current = setTimeout(() => {
@@ -223,7 +230,15 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     connect()
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
-      wsRef.current?.close()
+      const ws = wsRef.current
+      wsRef.current = null
+      if (ws) {
+        // Null handlers before closing so a cleanup-triggered close
+        // does not fire onclose and schedule a reconnect (React StrictMode
+        // runs cleanup+remount in dev, causing a spurious CONNECTING→close).
+        ws.onopen = ws.onclose = ws.onerror = ws.onmessage = null
+        ws.close()
+      }
     }
   }, [connect])
 
