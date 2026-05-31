@@ -58,12 +58,11 @@ log = logging.getLogger("obd_poller")
 # Hybrid-specific PIDs (battery_soc, ev_mode, regen) may return None
 # on non-hybrid vehicles or if Ford locks the PID. Handled gracefully.
 
-def _to_rpm(v):    return round(v.magnitude, 1) if v else None
-def _to_mph(v):    return round(v.to("mph").magnitude, 1) if v else None
-def _to_f(v):      return round(v.to("degF").magnitude, 1) if v else None
-def _to_pct(v):    return round(v.magnitude, 1) if v else None
-def _to_gph(v):    return round(v.magnitude, 3) if v else None
-def _passthrough(v): return v.magnitude if v else None
+def _to_rpm(v):    return round(v.magnitude, 1)          if v is not None else None
+def _to_mph(v):    return round(v.to("mph").magnitude, 1) if v is not None else None
+def _to_f(v):      return round(v.to("degF").magnitude, 1) if v is not None else None
+def _to_pct(v):    return round(v.magnitude, 1)           if v is not None else None
+def _to_gph(v):    return round(v.magnitude, 3)           if v is not None else None
 def _raw(v):       return v  # decoder already returns a plain number
 
 STANDARD_PIDS = [
@@ -153,7 +152,7 @@ def poll_once(connection: obd.OBD) -> dict:
             response = connection.query(command)
             reading[field] = converter(response.value) if not response.is_null() else None
         except Exception as e:
-            log.debug(f"PID error ({field}): {e}")
+            log.warning(f"PID error ({field}): {e}")
             reading[field] = None
 
     return reading
