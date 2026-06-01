@@ -108,13 +108,7 @@ function parseReading(message: unknown): LiveReading | null {
     speed_mph:        typeof m.speed_mph        === 'number' ? m.speed_mph        : null,
     coolant_temp_f:   typeof m.coolant_temp_f   === 'number' ? m.coolant_temp_f   : null,
     throttle_pct:     typeof m.throttle_pct     === 'number' ? m.throttle_pct     : null,
-    battery_soc_pct:  typeof m.battery_soc_pct  === 'number' ? m.battery_soc_pct  : null,
-    ev_mode:          typeof m.ev_mode          === 'number' ? m.ev_mode          : null,
-    regen_kw:         typeof m.regen_kw         === 'number' ? m.regen_kw         : null,
     fuel_rate_gph:    typeof m.fuel_rate_gph    === 'number' ? m.fuel_rate_gph    : null,
-    pack_voltage_v:   typeof m.pack_voltage_v   === 'number' ? m.pack_voltage_v   : null,
-    battery_current_a: typeof m.battery_current_a === 'number' ? m.battery_current_a : null,
-    motor_speed_rpm:  typeof m.motor_speed_rpm  === 'number' ? m.motor_speed_rpm  : null,
   }
 }
 
