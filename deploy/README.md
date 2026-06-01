@@ -10,7 +10,13 @@ sudo systemctl enable mosquitto
 sudo systemctl start mosquitto
 ```
 
-### 2. Set up Python virtual environment
+### 2. Install Node.js
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+### 3. Set up Python virtual environment
 ```bash
 cd /home/pi/maverick-telemetry-hub
 python3 -m venv venv
@@ -18,13 +24,24 @@ source venv/bin/activate
 pip install obd paho-mqtt
 ```
 
-### 3. Initialize the database
+### 4. Initialize the database
 ```bash
 source venv/bin/activate
 python db/migrate.py
 ```
 
-### 4. Grant USB access for OBDLink EX
+### 5. Install Node dependencies and build the client
+```bash
+cd server && npm install && cd ..
+cd client && npm install && npm run build && cd ..
+```
+
+### 6. Create the environment file
+```bash
+echo "ANTHROPIC_API_KEY=your_key_here" > server/.env
+```
+
+### 7. Grant USB access for OBDLink EX
 The poller runs as the `pi` user, not root. Add pi to the dialout
 group so it can access /dev/ttyUSB0 without sudo:
 ```bash
@@ -42,22 +59,19 @@ ls /dev/ttyUSB*
 
 ## Installing the services
 
-Copy all three service files to systemd and enable them:
+Copy all service files to systemd and enable them:
 
 ```bash
-sudo cp deploy/db_writer.service    /etc/systemd/system/
-sudo cp deploy/trip_manager.service /etc/systemd/system/
-sudo cp deploy/obd_poller.service   /etc/systemd/system/
+sudo cp deploy/db_writer.service       /etc/systemd/system/
+sudo cp deploy/trip_manager.service    /etc/systemd/system/
+sudo cp deploy/obd_poller.service      /etc/systemd/system/
+sudo cp deploy/express_bridge.service  /etc/systemd/system/
+sudo cp deploy/kiosk.service           /etc/systemd/system/
 
 sudo systemctl daemon-reload
 
-sudo systemctl enable db_writer
-sudo systemctl enable trip_manager
-sudo systemctl enable obd_poller
-
-sudo systemctl start db_writer
-sudo systemctl start trip_manager
-sudo systemctl start obd_poller
+sudo systemctl enable db_writer trip_manager obd_poller express_bridge kiosk
+sudo systemctl start  db_writer trip_manager obd_poller express_bridge kiosk
 ```
 
 ---
@@ -68,6 +82,8 @@ sudo systemctl start obd_poller
 sudo systemctl status db_writer
 sudo systemctl status trip_manager
 sudo systemctl status obd_poller
+sudo systemctl status express_bridge
+sudo systemctl status kiosk
 ```
 
 ## Live logs
@@ -75,14 +91,16 @@ sudo systemctl status obd_poller
 Each service logs to journald. Follow logs in real time:
 
 ```bash
-journalctl -u db_writer    -f
-journalctl -u trip_manager -f
-journalctl -u obd_poller   -f
+journalctl -u db_writer      -f
+journalctl -u trip_manager   -f
+journalctl -u obd_poller     -f
+journalctl -u express_bridge -f
+journalctl -u kiosk          -f
 ```
 
-Follow all three at once:
+Follow all at once:
 ```bash
-journalctl -u db_writer -u trip_manager -u obd_poller -f
+journalctl -u db_writer -u trip_manager -u obd_poller -u express_bridge -f
 ```
 
 ---
@@ -93,27 +111,41 @@ Services start in this order automatically via systemd dependencies:
 
 ```
 mosquitto → db_writer → trip_manager → obd_poller
+                     → express_bridge → kiosk
 ```
 
 If any service fails, systemd restarts it after 5 seconds.
-`obd_poller` does not require `trip_manager` to be running —
-it will keep publishing readings to MQTT regardless. Boot order
-is a best-effort courtesy, not a hard dependency.
+
+---
+
+## Updating
+
+After pulling new code:
+
+```bash
+git pull
+
+# Rebuild the client if frontend files changed
+cd client && npm run build && cd ..
+
+sudo systemctl restart express_bridge
+```
+
+If Python dependencies changed: `pip install -r requirements.txt`
+If service files changed: re-copy and run `sudo systemctl daemon-reload`
 
 ---
 
 ## Stopping everything
 
 ```bash
-sudo systemctl stop obd_poller
-sudo systemctl stop trip_manager
-sudo systemctl stop db_writer
+sudo systemctl stop obd_poller trip_manager db_writer express_bridge kiosk
 ```
 
 ## Disabling on boot
 
 ```bash
-sudo systemctl disable obd_poller trip_manager db_writer
+sudo systemctl disable obd_poller trip_manager db_writer express_bridge kiosk
 ```
 
 ---
@@ -133,3 +165,12 @@ sudo systemctl disable obd_poller trip_manager db_writer
 - Check db_writer logs: `journalctl -u db_writer -f`
 - Confirm database exists: `ls -lh /home/pi/maverick_telemetry.db`
 - Check WAL files aren't corrupted: `sqlite3 /home/pi/maverick_telemetry.db "PRAGMA integrity_check;"`
+
+**Trip has no summary stats (all dashes)**
+- If the Pi lost power mid-trip, db_writer will recover the trip automatically on next boot
+- Check logs for "Recovered unclosed trip": `journalctl -u db_writer -b | grep Recovered`
+
+**Dashboard not loading**
+- Check express_bridge is running: `sudo systemctl status express_bridge`
+- Confirm the client was built: `ls client/dist/index.html`
+- Check server logs: `journalctl -u express_bridge -f`
