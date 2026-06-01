@@ -11,7 +11,7 @@
 
 ## In the car
 
-![Mounted display showing live telemetry](docs/mounted-display.jpg)
+![Mounted display showing live telemetry](docs/PXL_20260531_2334220612.jpg)
 
 *5" touchscreen mounted in the cab — live speed and RPM traces, coolant temp, throttle, and fuel rate. Powered by the ignition via a hardwired 12V buck converter.*
 
@@ -19,10 +19,10 @@
 
 ## Dashboard
 
-![Trip list](docs/trip-list.png)
+![Trip list](docs/Screenshot%202026-05-31%20210531.png)
 *Trip history with MPG, average speed, and DTC badge for any trip with fault codes.*
 
-![Trip detail](docs/trip-detail.png)
+![Trip detail](docs/Screenshot%202026-05-31%20210608.png)
 *Per-trip detail: summary stats, AI-interpreted fault code (P0D0B diagnosed by Claude), and trip notes.*
 
 ---
